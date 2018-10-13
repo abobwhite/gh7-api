@@ -1,11 +1,13 @@
 package com.gh7.api.services;
 
 import com.gh7.api.exceptions.UserNotFoundException;
+import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
 import com.gh7.api.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,5 +30,10 @@ public class UserService {
     }
 
     return user.get();
+  }
+
+  public List<User> findOnCallUsersWithCapability(ASSISTANCE_CAPABILITY capability) {
+    // TODO: Add filtering for "On Call" status
+    return userRepository.findByAssistanceCapabilitiesContaining(capability);
   }
 }

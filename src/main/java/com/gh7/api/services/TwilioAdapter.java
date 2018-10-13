@@ -1,6 +1,7 @@
 package com.gh7.api.services;
 
 import com.gh7.api.config.TwilioConfig;
+import com.gh7.api.models.User;
 import com.twilio.http.HttpMethod;
 import com.twilio.twiml.VoiceResponse;
 import com.twilio.twiml.voice.*;
@@ -32,9 +33,8 @@ public class TwilioAdapter {
     Twilio.init(twilioConfig.accountSid, twilioConfig.authToken);
   }
 
-  public void makeVolunteerCall() {
-    String to = "+16365786943";
-    PhoneNumber toNumber = new PhoneNumber(to);
+  public void makeVolunteerCall(User volunteerToCall) {
+    PhoneNumber toNumber = convertUserPhoneToTwilioPhone(volunteerToCall.phoneNumber);
 
     try {
       URI callbackURI = new URI(twilioConfig.host + assistanceRequestScriptEndpoint);
@@ -164,4 +164,12 @@ public class TwilioAdapter {
 
     System.out.println(call.getSid());
   }
+
+  private PhoneNumber convertUserPhoneToTwilioPhone(com.gh7.api.models.PhoneNumber userPhone) {
+    String countryCode = userPhone.countryCode.toString();
+    String areaCode = userPhone.areaCode.toString();
+    String exchange = userPhone.exchange.toString();
+    String lineCode = userPhone.lineNumber.toString();
+    return new PhoneNumber("+" + countryCode + areaCode + exchange + lineCode);
+  };
 }
