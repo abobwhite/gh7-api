@@ -1,2 +1,8 @@
+spring:
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: gh7
 twilio:
   host: http://2a591e53.ngrok.io

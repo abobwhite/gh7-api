@@ -5,9 +5,12 @@ server:
 spring:
   data:
     mongodb:
-      host: localhost
+      host: gh7-db
       port: 27017
       database: gh7
+auth0:
+  issuer: https://gh7-beacon.auth0.com/
+  apiAudience: gh7-beacon-api
 twilio:
   host: http://167.99.0.129:8081/
   account:
