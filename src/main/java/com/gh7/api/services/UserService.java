@@ -23,7 +23,7 @@ public class UserService {
 
   public User getUserById(String id) throws UserNotFoundException {
     Optional<User> user = userRepository.findById(id);
-    if(!user.isPresent()) {
+    if (!user.isPresent()) {
       throw new UserNotFoundException();
     }
 
