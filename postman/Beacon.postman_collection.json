@@ -1,0 +1,38 @@
+{
+	"info": {
+		"_postman_id": "8306fb29-f5a4-4e6d-b22b-028a4e161bcb",
+		"name": "Beacon",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "User",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"givenName\": \"Alex\",\n\t\"familyName\": \"White\",\n\t\"username\": \"abobwhite89@gmail.com\",\n\t\"phoneNumber\": {\n\t\t\"areaCode\": \"314\",\n\t\t\"exchange\": \"910\",\n\t\t\"lineNumber\": \"8606\"\n\t}\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
