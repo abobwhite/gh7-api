@@ -8,3 +8,10 @@ spring:
       host: localhost
       port: 27017
       database: gh7
+twilio:
+  host: http://167.99.0.129:8081/
+  account:
+    sid: AC5b4e5a52259290419a8761256f205e08
+  auth_token: 0dda1387ab171c573b976abaf4ae4d5c
+  numbers:
+    outbound: +13145829012
