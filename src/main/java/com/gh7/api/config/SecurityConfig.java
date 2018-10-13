@@ -28,14 +28,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         .forRS256(apiAudience, issuer)
         .configure(http)
         .authorizeRequests()
-        .antMatchers(HttpMethod.GET, "/users*").authenticated()
-        .antMatchers(HttpMethod.GET, "/users/*").authenticated()
-        .antMatchers(HttpMethod.POST, "/users*").permitAll()
-        .antMatchers(HttpMethod.PUT, "/users**").authenticated()
-
-        .antMatchers(HttpMethod.POST, "/assistance**").authenticated()
-
-        .antMatchers(HttpMethod.POST, "/twilio**").permitAll();
+        .antMatchers("/actuator/**").permitAll()
+        .antMatchers(HttpMethod.POST, "/twilio/**").permitAll()
+        .anyRequest().authenticated();
   }
 
 //  @Bean
