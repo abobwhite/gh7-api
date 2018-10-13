@@ -1,12 +1,6 @@
 package com.gh7.api.controllers;
 
-import com.gh7.api.config.TwilioConfig;
 import com.gh7.api.services.TwilioAdapter;
-import com.twilio.http.HttpMethod;
-import com.twilio.twiml.VoiceResponse;
-import com.twilio.twiml.voice.Gather;
-import com.twilio.twiml.voice.Redirect;
-import com.twilio.twiml.voice.Say;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,19 +18,34 @@ public class TwilioController {
         this.twilioAdapter = twilioAdapter;
     }
 
-    @PostMapping(value="/callscript", produces = "application/xml; charset=utf-8")
-    public String getCallScript() {
+    @PostMapping(value="/scripts/assistance-request", produces = "application/xml; charset=utf-8")
+    public String getAssistanceRequestScript() {
 
         String response = this.twilioAdapter.getAssistPromptVoiceScript().toXml();
         System.out.println(response);
         return response;
     }
 
+    @PostMapping(value = "/callbacks/assistance-request", produces = "application/xml; charset=utf-8")
+    public String handleAssistanceRequestGatherResponse(@RequestParam(value = "Digits") String digits) {
 
-    @PostMapping(value = "/gather", produces = "application/xml; charset=utf-8")
-    public String handlerGatherResponse(@RequestParam(value = "Digits") String digits) {
+        String response = this.twilioAdapter.handleAssistanceRequestGatherResponse(digits).toXml();
+        System.out.println(response);
+        return response;
+    }
 
-        String response = this.twilioAdapter.handleGatherResponse(digits).toXml();
+    @PostMapping(value="/scripts/assistance-ivr", produces = "application/xml; charset=utf-8")
+    public String getAssistanceIVRScript() {
+
+        String response = this.twilioAdapter.getAssistanceIVRScript().toXml();
+        System.out.println(response);
+        return response;
+    }
+
+    @PostMapping(value = "/callbacks/assistance-ivr", produces = "application/xml; charset=utf-8")
+    public String handleAssistanceIVRGatherResponse(@RequestParam(value = "Digits", required = false) String digits) {
+
+        String response = this.twilioAdapter.handleAssitanceIVRGatherResponse(digits).toXml();
         System.out.println(response);
         return response;
     }

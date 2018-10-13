@@ -22,4 +22,9 @@ public class AssistanceController {
         this.assistanceService.handleNewAssistanceRequest();
     }
 
+    @PostMapping("/phonehelp")
+    public void initiateAssistancePhoneHelpCall() {
+        this.assistanceService.handleNewAssistancePhoneHelpRequest();
+    }
+
 }

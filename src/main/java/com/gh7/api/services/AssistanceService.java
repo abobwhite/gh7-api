@@ -6,15 +6,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class AssistanceService {
 
-    private TwilioAdapter twilioAdapter;
+  private TwilioAdapter twilioAdapter;
 
-    @Autowired
-    public AssistanceService(TwilioAdapter twilioAdapter) {
-        this.twilioAdapter = twilioAdapter;
-    }
+  @Autowired
+  public AssistanceService(TwilioAdapter twilioAdapter) {
+    this.twilioAdapter = twilioAdapter;
+  }
 
-    public void handleNewAssistanceRequest() {
-        twilioAdapter.makeCall();
-    }
+  public void handleNewAssistanceRequest() {
+    twilioAdapter.makeVolunteerCall();
+  }
+
+  public void handleNewAssistancePhoneHelpRequest() {
+    twilioAdapter.makePhoneHelpCall();
+  }
 
 }
