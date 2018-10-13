@@ -9,7 +9,7 @@ import java.util.Locale;
 public class User {
   @Id
   public String id;
-  public String username; // From Auth0
+  public String username; // From Auth0 - email
   public String givenName;
   public String familyName;
   @Indexed
