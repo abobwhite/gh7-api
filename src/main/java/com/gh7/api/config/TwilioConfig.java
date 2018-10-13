@@ -8,15 +8,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class TwilioConfig {
 
-    @Value("${twilio.host}")
-    public String host;
+  @Value("${twilio.host}")
+  public String host;
 
-    @Value("${twilio.account.sid}")
-    public String accountSid;
+  @Value("${twilio.account.sid}")
+  public String accountSid;
 
-    @Value("${twilio.auth_token}")
-    public String authToken;
+  @Value("${twilio.auth_token}")
+  public String authToken;
 
-    @Value("${twilio.numbers.outbound}")
-    public String outboundNumber;
+  @Value("${twilio.numbers.outbound}")
+  public String outboundNumber;
 }

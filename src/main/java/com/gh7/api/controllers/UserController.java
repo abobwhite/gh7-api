@@ -6,9 +6,9 @@ import com.gh7.api.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import javax.websocket.server.PathParam;
 
 @RestController
 @RequestMapping("/users")
@@ -20,10 +20,17 @@ public class UserController {
     this.userService = userService;
   }
 
-  @GetMapping("/{username}")
-  public ResponseEntity<User> getUserByUsername(@PathVariable("username") String username) {
+  @GetMapping("/{id}")
+  public ResponseEntity<User> getUserById(@PathVariable("id") String id) {
+
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String authenticatedUser = authentication.getName();
+    if (!id.equalsIgnoreCase(authenticatedUser)) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
     try {
-      User user = userService.getUserByUsername(username);
+      User user = userService.getUserById(id);
       return new ResponseEntity<>(user, HttpStatus.OK);
     } catch (UserNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -34,6 +41,10 @@ public class UserController {
 
   @PostMapping()
   public ResponseEntity<User> createUser(@RequestBody User user) {
+
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    user.id = authentication.getName();
+
     try {
       user = userService.createUser(user);
       return new ResponseEntity<>(user, HttpStatus.CREATED);

@@ -21,8 +21,8 @@ public class UserService {
     return userRepository.insert(user);
   }
 
-  public User getUserByUsername(String username) throws UserNotFoundException {
-    Optional<User> user = userRepository.findByUsername(username);
+  public User getUserById(String id) throws UserNotFoundException {
+    Optional<User> user = userRepository.findById(id);
     if(!user.isPresent()) {
       throw new UserNotFoundException();
     }
