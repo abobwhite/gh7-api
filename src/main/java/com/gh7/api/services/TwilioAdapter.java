@@ -2,34 +2,37 @@ package com.gh7.api.services;
 
 import com.gh7.api.config.TwilioConfig;
 import com.gh7.api.models.User;
+import com.twilio.Twilio;
 import com.twilio.http.HttpMethod;
+import com.twilio.rest.api.v2010.account.Call;
 import com.twilio.twiml.VoiceResponse;
 import com.twilio.twiml.voice.*;
 import com.twilio.twiml.voice.Number;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.twilio.Twilio;
-import com.twilio.rest.api.v2010.account.Call;
 import com.twilio.type.PhoneNumber;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 
 @Service
 public class TwilioAdapter {
 
-  private static String assistanceRequestScriptEndpoint = "/api/twilio/scripts/assistance-request";
-  private static String assistanceRequestGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-request";
+  private static final String assistanceRequestScriptEndpoint = "/api/twilio/scripts/assistance-request";
+  private static final String assistanceRequestGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-request";
 
-  private static String assistanceIVRScriptEndpoint = "/api/twilio/scripts/assistance-ivr";
-  private static String assistanceIVRGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-ivr";
+  private static final String assistanceIVRScriptEndpoint = "/api/twilio/scripts/assistance-ivr";
+  private static final String assistanceIVRGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-ivr";
 
   private TwilioConfig twilioConfig;
+  private final TranslationResourceBundleService translationResourceBundleService;
 
   @Autowired
-  public TwilioAdapter(TwilioConfig twilioConfig) {
+  public TwilioAdapter(TwilioConfig twilioConfig, final TranslationResourceBundleService translationResourceBundleService) {
     this.twilioConfig = twilioConfig;
+    this.translationResourceBundleService = translationResourceBundleService;
     Twilio.init(twilioConfig.accountSid, twilioConfig.authToken);
   }
 
@@ -71,7 +74,6 @@ public class TwilioAdapter {
   }
 
   public VoiceResponse handleAssistanceRequestGatherResponse(String digits) {
-
     VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
     switch (digits) {
       case "1":
@@ -108,9 +110,9 @@ public class TwilioAdapter {
     try {
       Say prompt = new Say.Builder(
           "This is Beacon. You requested immediate translation help." +
-          "Press 1 if you need help with law enforcement." +
-          "Press 2 if you need help with a medical issue." +
-          "If you need other translation help, just stay on the line.")
+              "Press 1 if you need help with law enforcement." +
+              "Press 2 if you need help with a medical issue." +
+              "If you need other translation help, just stay on the line.")
           .voice(Say.Voice.ALICE)
           .language(Say.Language.EN_US)
           .build();
@@ -141,12 +143,12 @@ public class TwilioAdapter {
     switch (digits) {
       case "1":
         responseSpeech = "Your request for law enforcement translation help has been received. " +
-                         "We will call you back as soon as possible once we have found someone to help.";
+            "We will call you back as soon as possible once we have found someone to help.";
         break;
 
       case "2":
         responseSpeech = "Your request for medical translation help has been received. " +
-                         "We will call you back as soon as possible once we have found someone to help.";
+            "We will call you back as soon as possible once we have found someone to help.";
         break;
 
       default:
@@ -166,10 +168,15 @@ public class TwilioAdapter {
   }
 
   private PhoneNumber convertUserPhoneToTwilioPhone(com.gh7.api.models.PhoneNumber userPhone) {
-    String countryCode = userPhone.countryCode.toString();
-    String areaCode = userPhone.areaCode.toString();
-    String exchange = userPhone.exchange.toString();
-    String lineCode = userPhone.lineNumber.toString();
+    String countryCode = userPhone.countryCode;
+    String areaCode = userPhone.areaCode;
+    String exchange = userPhone.exchange;
+    String lineCode = userPhone.lineNumber;
     return new PhoneNumber("+" + countryCode + areaCode + exchange + lineCode);
-  };
+  }
+
+  @Cacheable("translation")
+  public String translate(String translationKey, Locale locale) {
+    return translationResourceBundleService.getTranslationResourceBundle(locale).getString(translationKey);
+  }
 }
