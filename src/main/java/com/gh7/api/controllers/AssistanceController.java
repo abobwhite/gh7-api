@@ -10,21 +10,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/assistance")
 public class AssistanceController {
 
-    private final AssistanceService assistanceService;
+  private final AssistanceService assistanceService;
 
-    @Autowired
-    public AssistanceController(final AssistanceService assistanceService) {
-        this.assistanceService = assistanceService;
-    }
+  @Autowired
+  public AssistanceController(final AssistanceService assistanceService) {
+    this.assistanceService = assistanceService;
+  }
 
-    @PostMapping("/request")
-    public void createNewAssistanceRequest() {
-        this.assistanceService.handleNewAssistanceRequest();
-    }
+  @PostMapping("/request")
+  public void createNewAssistanceRequest() {
+    this.assistanceService.handleNewAssistanceRequest();
+  }
 
-    @PostMapping("/phonehelp")
-    public void initiateAssistancePhoneHelpCall() {
-        this.assistanceService.handleNewAssistancePhoneHelpRequest();
-    }
+  @PostMapping("/phonehelp")
+  public void initiateAssistancePhoneHelpCall() {
+    this.assistanceService.handleNewAssistancePhoneHelpRequest();
+  }
 
 }
