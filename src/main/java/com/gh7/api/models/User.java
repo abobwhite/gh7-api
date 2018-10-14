@@ -20,4 +20,5 @@ public class User {
   public Locale preferredLanguage;
   public Locale assistanceLanguage;
   public List<ASSISTANCE_CAPABILITY> assistanceCapabilities;
+  public List<ServiceCapability> serviceCapabilities;
 }
