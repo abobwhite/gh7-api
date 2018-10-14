@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,11 +26,8 @@ public class AssistanceController {
   }
 
   @PostMapping("/request")
-  public void createNewAssistanceRequest() {
-
-    UserAssistanceRequest userAssistanceRequest = new UserAssistanceRequest();
+  public void createNewAssistanceRequest(@RequestBody() UserAssistanceRequest userAssistanceRequest) {
     userAssistanceRequest.createdAt = Instant.now();
-    userAssistanceRequest.requestedCapability = ASSISTANCE_CAPABILITY.LAW_ENFORCEMENT_TRANSLATION;
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String authenticatedUser = authentication.getName();
