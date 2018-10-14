@@ -221,8 +221,9 @@ public class TwilioAdapter {
         user.preferredLanguage.getLanguage(),
         user.preferredLanguage.getCountry());
 
+    System.out.println("Converting user locale to Twilio locale: " + user.preferredLanguage.toString() + " : " + localeId);
     switch (localeId) {
-      case "ES-ES":
+      case "es-ES":
         return Say.Language.ES_ES;
       default:
         return Say.Language.EN_US;
