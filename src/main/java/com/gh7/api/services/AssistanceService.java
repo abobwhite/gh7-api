@@ -56,7 +56,7 @@ public class AssistanceService {
 
     List<User> potentialVolunteers = userService.findOnCallUsersWithCapability(userAssistanceRequest.requestedCapability);
     Optional<User> volunteer = potentialVolunteers.stream()
-        .filter(potentialVolunteer -> userAssistanceRequest.rejectedVolunteerIds.contains(potentialVolunteer.id))
+        .filter(potentialVolunteer -> !userAssistanceRequest.rejectedVolunteerIds.contains(potentialVolunteer.id))
         .findFirst();
 
     if (!volunteer.isPresent()) {
