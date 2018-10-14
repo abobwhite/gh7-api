@@ -32,8 +32,11 @@ public class UserService {
     return user.get();
   }
 
+  public User updateUser(User user) {
+    return this.userRepository.save(user);
+  }
+
   public List<User> findOnCallUsersWithCapability(ASSISTANCE_CAPABILITY capability) {
-    // TODO: Add filtering for "On Call" status
-    return userRepository.findByAssistanceCapabilitiesContaining(capability);
+    return userRepository.findByAssistanceCapabilitiesContainingAndOnCall(capability, true);
   }
 }

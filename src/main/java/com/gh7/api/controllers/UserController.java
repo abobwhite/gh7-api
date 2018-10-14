@@ -8,7 +8,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.lang.reflect.Field;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -20,18 +24,45 @@ public class UserController {
     this.userService = userService;
   }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<User> getUserById(@PathVariable("id") String id) {
+  @GetMapping("/{userId}")
+  public ResponseEntity<User> getUserById(@PathVariable() String userId) {
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String authenticatedUser = authentication.getName();
-    if (!id.equalsIgnoreCase(authenticatedUser)) {
+    if (!userId.equalsIgnoreCase(authenticatedUser)) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     try {
-      User user = userService.getUserById(id);
+      User user = userService.getUserById(userId);
       return new ResponseEntity<>(user, HttpStatus.OK);
+    } catch (UserNotFoundException e) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT);
+    }
+  }
+
+  @PatchMapping("/{userId}")
+  public ResponseEntity<User> patchUserById(@PathVariable() String userId,
+                                            @RequestBody Map<String, Object> updatedFields) {
+
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String authenticatedUser = authentication.getName();
+    if (!userId.equalsIgnoreCase(authenticatedUser)) {
+      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    try {
+      User currentUser = userService.getUserById(userId);
+      updatedFields.forEach((key, value) -> {
+        Field field = ReflectionUtils.findField(User.class, key);
+        if (field != null) {
+          ReflectionUtils.setField(field, currentUser, value);
+        }
+      });
+      User responseUser = this.userService.updateUser(currentUser);
+      return new ResponseEntity<>(responseUser, HttpStatus.OK);
     } catch (UserNotFoundException e) {
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (Exception e) {

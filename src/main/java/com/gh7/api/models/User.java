@@ -13,6 +13,7 @@ public class User {
   public String givenName;
   public String familyName;
   public boolean capabilitiesVerified;
+  public boolean onCall;
   @Indexed
   public PhoneNumber phoneNumber;
   public List<Locale> knownLanguages;

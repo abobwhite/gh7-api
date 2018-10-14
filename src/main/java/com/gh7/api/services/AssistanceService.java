@@ -55,7 +55,7 @@ public class AssistanceService {
     // TODO: Rework all of this to remove already rejected users...
     List<User> availableVolunteers = userService.findOnCallUsersWithCapability(userAssistanceRequest.requestedCapability);
     if (availableVolunteers.size() == 0) {
-      System.out.print("NO MATCHING VOLUNTEERS FOUND FOR REQUEST!!");
+      System.out.println("NO MATCHING VOLUNTEERS FOUND FOR REQUEST!!");
     }
 
     Iterator<User> currentVolunteer = availableVolunteers.iterator();

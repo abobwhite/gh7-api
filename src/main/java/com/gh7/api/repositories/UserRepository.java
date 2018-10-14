@@ -12,5 +12,5 @@ import java.util.Optional;
 @Repository
 @RepositoryRestResource(exported = false)
 public interface UserRepository extends MongoRepository<User, String> {
-  List<User> findByAssistanceCapabilitiesContaining(ASSISTANCE_CAPABILITY capability);
+  List<User> findByAssistanceCapabilitiesContainingAndOnCall(ASSISTANCE_CAPABILITY capability, boolean onCall);
 }

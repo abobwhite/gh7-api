@@ -5,7 +5,6 @@ import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
 import com.gh7.api.models.UserAssistanceRequest;
 import com.twilio.Twilio;
-import com.twilio.http.HttpMethod;
 import com.twilio.rest.api.v2010.account.Call;
 import com.twilio.twiml.VoiceResponse;
 import com.twilio.twiml.voice.*;
@@ -107,8 +106,8 @@ public class TwilioAdapter {
 
     String content = translate("twilio.assist-confirmed", volunteer.preferredLanguage);
     Say say = new Say.Builder(content)
-                     .language(convertUserPreferredLanguageToTwilioLanguage(volunteer))
-                     .build();
+        .language(convertUserPreferredLanguageToTwilioLanguage(volunteer))
+        .build();
 
     responseBuilder.say(say);
     responseBuilder.pause(new Pause.Builder().length(1).build());
@@ -164,13 +163,15 @@ public class TwilioAdapter {
           .say(prompt)
           .build();
 
+      /*
       Redirect redirect = new Redirect.Builder(new URI(twilioConfig.host +
           assistanceIVRScriptEndpoint +
           encodeValue(requestingUser.id)))
           .method(HttpMethod.POST)
           .build();
+          */
 
-      responseBuilder.gather(gather).redirect(redirect);
+      responseBuilder.gather(gather);//.redirect(redirect);
     } catch (URISyntaxException ex) {
       System.out.print(ex.toString());
     }
@@ -192,19 +193,17 @@ public class TwilioAdapter {
     String content = translate(contentKey, requestor.preferredLanguage);
 
     Say say = new Say.Builder(content)
-                     .language(convertUserPreferredLanguageToTwilioLanguage(requestor))
-                     .build();
+        .language(convertUserPreferredLanguageToTwilioLanguage(requestor))
+        .build();
     responseBuilder.say(say);
 
     return responseBuilder.build();
   }
 
   private void makeOutgoingCall(PhoneNumber toNumber, URI callScriptLocation) {
-    Call call = Call.creator(toNumber,
+    Call.creator(toNumber,
         new PhoneNumber(twilioConfig.outboundNumber),
         callScriptLocation).create();
-
-    System.out.println(call.getSid());
   }
 
   private PhoneNumber convertUserPhoneToTwilioPhone(com.gh7.api.models.PhoneNumber userPhone) {
@@ -233,8 +232,7 @@ public class TwilioAdapter {
   private String encodeValue(String value) {
     try {
       return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-    }
-    catch (UnsupportedEncodingException ex) {
+    } catch (UnsupportedEncodingException ex) {
       System.out.print("Unsupported Encoding Exception Thrown...");
       return value;
     }
