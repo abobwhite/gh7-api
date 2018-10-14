@@ -3,6 +3,7 @@ package com.gh7.api.models;
 import org.springframework.data.annotation.Id;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserAssistanceRequest {
@@ -14,5 +15,5 @@ public class UserAssistanceRequest {
   public ASSISTANCE_CAPABILITY requestedCapability;
   public Instant createdAt;
 
-  public List<String> rejectedVolunteerIds;
+  public List<String> rejectedVolunteerIds = new ArrayList<>();
 }
