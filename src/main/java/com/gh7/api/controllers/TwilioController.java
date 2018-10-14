@@ -1,6 +1,7 @@
 package com.gh7.api.controllers;
 
 import com.gh7.api.exceptions.UserNotFoundException;
+import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
 import com.gh7.api.models.UserAssistanceRequest;
 import com.gh7.api.repositories.UserAssistanceRequestRepository;
@@ -9,8 +10,10 @@ import com.gh7.api.services.TwilioAdapter;
 import com.gh7.api.services.UserService;
 import com.twilio.twiml.VoiceResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @RestController
@@ -106,16 +109,62 @@ public class TwilioController {
                produces = "application/xml; charset=utf-8")
   public String getAssistanceIVRScript(@PathVariable() String userId) {
 
-    String response = this.twilioAdapter.getAssistanceIVRScript().toXml();
+    User requestor = null;
+    try {
+      requestor = this.userService.getUserById(userId);
+    }
+    catch (UserNotFoundException ex) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+    }
+
+    if (requestor == null) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+      return this.twilioAdapter.generateGenericErrorResponse().toXml();
+    }
+
+    String response = this.twilioAdapter.getAssistanceIVRScript(requestor).toXml();
     System.out.println(response);
     return response;
   }
 
-  @PostMapping(value = "/callbacks/assistance-ivr", produces = "application/xml; charset=utf-8")
-  public String handleAssistanceIVRGatherResponse(@RequestParam(value = "Digits", required = false) String digits) {
+  @PostMapping(value = "/callbacks/assistance-ivr/{userId}",
+               produces = "application/xml; charset=utf-8")
+  public String handleAssistanceIVRGatherResponse(@PathVariable() String userId,
+                                                  @RequestParam(value = "Digits") String digits) {
 
-    String response = this.twilioAdapter.handleAssitanceIVRGatherResponse(digits).toXml();
+    User requestor = null;
+    try {
+      requestor = this.userService.getUserById(userId);
+    }
+    catch (UserNotFoundException ex) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+    }
+
+    if (requestor == null) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+      return this.twilioAdapter.generateGenericErrorResponse().toXml();
+    }
+
+    ASSISTANCE_CAPABILITY capability = ASSISTANCE_CAPABILITY.GENERAL_TRANSLATION;
+    switch (digits) {
+      case "1":
+        capability = ASSISTANCE_CAPABILITY.LAW_ENFORCEMENT_TRANSLATION;
+        break;
+
+      case "2":
+        capability = ASSISTANCE_CAPABILITY.MEDICAL_TRANSLATION;
+        break;
+    }
+
+    String response = this.twilioAdapter.respondToIVRResponse(requestor, capability).toXml();
     System.out.println(response);
+
+    UserAssistanceRequest userAssistanceRequest = new UserAssistanceRequest();
+    userAssistanceRequest.requestedCapability = capability;
+    userAssistanceRequest.requestingUserId = requestor.id;
+    userAssistanceRequest.createdAt = Instant.now();
+    this.assistanceService.handleNewAssistanceRequest(userAssistanceRequest);
+
     return response;
   }
 }

@@ -1,6 +1,7 @@
 package com.gh7.api.services;
 
 import com.gh7.api.config.TwilioConfig;
+import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
 import com.gh7.api.models.UserAssistanceRequest;
 import com.twilio.Twilio;
@@ -141,29 +142,31 @@ public class TwilioAdapter {
     }
   }
 
-  public VoiceResponse getAssistanceIVRScript() {
+  public VoiceResponse getAssistanceIVRScript(User requestingUser) {
     VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
     responseBuilder.pause(new Pause.Builder().length(1).build());
 
+    String content = translate("twilio.phone-help-ivr-menu",
+        requestingUser.preferredLanguage);
+
     try {
-      Say prompt = new Say.Builder(
-          "This is Beacon. You requested immediate translation help." +
-              "Press 1 if you need help with law enforcement." +
-              "Press 2 if you need help with a medical issue." +
-              "If you need other translation help, just stay on the line.")
-          .voice(Say.Voice.ALICE)
-          .language(Say.Language.EN_US)
+      Say prompt = new Say.Builder(content)
+          .language(convertUserPreferredLanguageToTwilioLanguage(requestingUser))
           .build();
 
       Gather gather = new Gather.Builder()
-          .action(new URI(twilioConfig.host + assistanceIVRGatherCallbackEndpoint))
-          .input(Gather.Input.DTMF_SPEECH)
+          .action(new URI(twilioConfig.host +
+              assistanceIVRGatherCallbackEndpoint +
+              encodeValue(requestingUser.id)))
+          .input(Gather.Input.DTMF)
           .timeout(10)
           .numDigits(1)
           .say(prompt)
           .build();
 
-      Redirect redirect = new Redirect.Builder(new URI(twilioConfig.host + assistanceIVRGatherCallbackEndpoint))
+      Redirect redirect = new Redirect.Builder(new URI(twilioConfig.host +
+          assistanceIVRScriptEndpoint +
+          encodeValue(requestingUser.id)))
           .method(HttpMethod.POST)
           .build();
 
@@ -175,24 +178,23 @@ public class TwilioAdapter {
     return responseBuilder.build();
   }
 
-  public VoiceResponse handleAssitanceIVRGatherResponse(String digits) {
+  public VoiceResponse respondToIVRResponse(User requestor, ASSISTANCE_CAPABILITY requiredCapability) {
     VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
-    String responseSpeech = "Your request has been received. We will call you back once we have found someone to help";
-    switch (digits) {
-      case "1":
-        responseSpeech = "Your request for law enforcement translation help has been received. " +
-            "We will call you back as soon as possible once we have found someone to help.";
+    String contentKey = "twilio.ivr-response";
+    switch (requiredCapability) {
+      case LAW_ENFORCEMENT_TRANSLATION:
+        contentKey += ".law-enforcement";
         break;
 
-      case "2":
-        responseSpeech = "Your request for medical translation help has been received. " +
-            "We will call you back as soon as possible once we have found someone to help.";
-        break;
-
-      default:
-        break;
+      case MEDICAL_TRANSLATION:
+        contentKey += ".medical";
     }
-    responseBuilder.say(new Say.Builder(responseSpeech).voice(Say.Voice.ALICE).language(Say.Language.EN_US).build());
+    String content = translate(contentKey, requestor.preferredLanguage);
+
+    Say say = new Say.Builder(content)
+                     .language(convertUserPreferredLanguageToTwilioLanguage(requestor))
+                     .build();
+    responseBuilder.say(say);
 
     return responseBuilder.build();
   }
