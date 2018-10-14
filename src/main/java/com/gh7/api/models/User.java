@@ -12,6 +12,7 @@ public class User {
   public String email;
   public String givenName;
   public String familyName;
+  public boolean capabilitiesVerified;
   @Indexed
   public PhoneNumber phoneNumber;
   public List<Locale> knownLanguages;
