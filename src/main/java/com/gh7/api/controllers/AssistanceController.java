@@ -1,6 +1,5 @@
 package com.gh7.api.controllers;
 
-import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.UserAssistanceRequest;
 import com.gh7.api.models.UserPhoneHelpRequest;
 import com.gh7.api.services.AssistanceService;
