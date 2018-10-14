@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AssistanceService {
@@ -52,19 +54,16 @@ public class AssistanceService {
   @Async
   public void locateVolunteerForRequest(UserAssistanceRequest userAssistanceRequest) {
 
-    // TODO: Rework all of this to remove already rejected users...
-    List<User> availableVolunteers = userService.findOnCallUsersWithCapability(userAssistanceRequest.requestedCapability);
-    if (availableVolunteers.size() == 0) {
+    List<User> potentialVolunteers = userService.findOnCallUsersWithCapability(userAssistanceRequest.requestedCapability);
+    Optional<User> volunteer = potentialVolunteers.stream()
+        .filter(potentialVolunteer -> userAssistanceRequest.rejectedVolunteerIds.contains(potentialVolunteer.id))
+        .findFirst();
+
+    if (!volunteer.isPresent()) {
       System.out.println("NO MATCHING VOLUNTEERS FOUND FOR REQUEST!!");
+      return;
     }
 
-    Iterator<User> currentVolunteer = availableVolunteers.iterator();
-    boolean requestAccepted = false;
-    while (!requestAccepted && currentVolunteer.hasNext()) {
-      User volunteerToCall = currentVolunteer.next();
-      twilioAdapter.makeVolunteerCall(userAssistanceRequest, volunteerToCall);
-      requestAccepted = true;
-    }
+    twilioAdapter.makeVolunteerCall(userAssistanceRequest, volunteer.get());
   }
-
 }

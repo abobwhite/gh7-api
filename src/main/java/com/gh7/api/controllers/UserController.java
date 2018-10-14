@@ -1,6 +1,7 @@
 package com.gh7.api.controllers;
 
 import com.gh7.api.exceptions.UserNotFoundException;
+import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
 import com.gh7.api.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,11 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -58,14 +63,25 @@ public class UserController {
       updatedFields.forEach((key, value) -> {
         Field field = ReflectionUtils.findField(User.class, key);
         if (field != null) {
-          ReflectionUtils.setField(field, currentUser, value);
+          if (field.getType() == Locale.class) {
+            ReflectionUtils.setField(field, currentUser, new Locale((String)value));
+          }
+          else if (field.getName().equalsIgnoreCase("assistanceCapabilities")) {
+            ArrayList<String> list = (ArrayList<String>)value;
+            currentUser.assistanceCapabilities = list.stream().map(ASSISTANCE_CAPABILITY::valueOf).collect(Collectors.toList());
+          }
+          else {
+            ReflectionUtils.setField(field, currentUser, value);
+          }
         }
       });
       User responseUser = this.userService.updateUser(currentUser);
       return new ResponseEntity<>(responseUser, HttpStatus.OK);
     } catch (UserNotFoundException e) {
+      System.out.println(e.toString());
       return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     } catch (Exception e) {
+      System.out.println(e.toString());
       return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT);
     }
   }
