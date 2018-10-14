@@ -1,27 +1,54 @@
 package com.gh7.api.controllers;
 
+import com.gh7.api.exceptions.UserNotFoundException;
+import com.gh7.api.models.User;
+import com.gh7.api.models.UserAssistanceRequest;
+import com.gh7.api.repositories.UserAssistanceRequestRepository;
 import com.gh7.api.services.TwilioAdapter;
+import com.gh7.api.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/twilio")
 public class TwilioController {
 
   private TwilioAdapter twilioAdapter;
+  private UserService userService;
+  private UserAssistanceRequestRepository userAssistanceRequestRepository;
 
   @Autowired
-  public TwilioController(TwilioAdapter twilioAdapter) {
+  public TwilioController(TwilioAdapter twilioAdapter,
+                          UserService userService,
+                          UserAssistanceRequestRepository userAssistanceRequestRepository) {
     this.twilioAdapter = twilioAdapter;
+    this.userService = userService;
+    this.userAssistanceRequestRepository = userAssistanceRequestRepository;
   }
 
-  @PostMapping(value = "/scripts/assistance-request", produces = "application/xml; charset=utf-8")
-  public String getAssistanceRequestScript() {
+  @PostMapping(value = "/scripts/assistance-request/{userAssistanceRequestId}/{volunteerId}",
+               produces = "application/xml; charset=utf-8")
+  public String getAssistanceRequestScript(@PathVariable() String userAssistanceRequestId,
+                                           @PathVariable() String volunteerId) {
 
-    String response = this.twilioAdapter.getAssistPromptVoiceScript().toXml();
+    Optional<UserAssistanceRequest> optionalRequest = Optional.empty();
+    User volunteer = null;
+    try {
+      optionalRequest = this.userAssistanceRequestRepository.findById(userAssistanceRequestId);
+      volunteer = this.userService.getUserById(volunteerId);
+    }
+    catch (UserNotFoundException ex) {
+    }
+
+    if (!optionalRequest.isPresent() || volunteer == null) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+      return this.twilioAdapter.generateGenericErrorResponse().toXml();
+    }
+    UserAssistanceRequest request = optionalRequest.get();
+
+    String response = this.twilioAdapter.getAssistPromptVoiceScript(request, volunteer).toXml();
     System.out.println(response);
     return response;
   }
@@ -34,8 +61,9 @@ public class TwilioController {
     return response;
   }
 
-  @PostMapping(value = "/scripts/assistance-ivr", produces = "application/xml; charset=utf-8")
-  public String getAssistanceIVRScript() {
+  @PostMapping(value = "/scripts/assistance-ivr/{userId}",
+               produces = "application/xml; charset=utf-8")
+  public String getAssistanceIVRScript(@PathVariable() String userId) {
 
     String response = this.twilioAdapter.getAssistanceIVRScript().toXml();
     System.out.println(response);

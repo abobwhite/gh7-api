@@ -2,6 +2,7 @@ package com.gh7.api.controllers;
 
 import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.UserAssistanceRequest;
+import com.gh7.api.models.UserPhoneHelpRequest;
 import com.gh7.api.services.AssistanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -39,7 +40,13 @@ public class AssistanceController {
 
   @PostMapping("/phonehelp")
   public void initiateAssistancePhoneHelpCall() {
-    this.assistanceService.handleNewAssistancePhoneHelpRequest();
+
+    UserPhoneHelpRequest userPhoneHelpRequest = new UserPhoneHelpRequest();
+    userPhoneHelpRequest.createdAt = Instant.now();
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    userPhoneHelpRequest.requestingUserId = authentication.getName();
+
+    this.assistanceService.handleNewAssistancePhoneHelpRequest(userPhoneHelpRequest);
   }
 
 }

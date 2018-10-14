@@ -1,7 +1,10 @@
 package com.gh7.api.services;
 
 import com.gh7.api.config.TwilioConfig;
+import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
+import com.gh7.api.models.UserAssistanceRequest;
+import com.gh7.api.models.UserPhoneHelpRequest;
 import com.twilio.Twilio;
 import com.twilio.http.HttpMethod;
 import com.twilio.rest.api.v2010.account.Call;
@@ -13,18 +16,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import javax.websocket.EncodeException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.Locale;
 
 @Service
 public class TwilioAdapter {
 
-  private static final String assistanceRequestScriptEndpoint = "/api/twilio/scripts/assistance-request";
-  private static final String assistanceRequestGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-request";
+  private static final String assistanceRequestScriptEndpoint = "/api/twilio/scripts/assistance-request/";
+  private static final String assistanceRequestGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-request/";
 
-  private static final String assistanceIVRScriptEndpoint = "/api/twilio/scripts/assistance-ivr";
-  private static final String assistanceIVRGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-ivr";
+  private static final String assistanceIVRScriptEndpoint = "/api/twilio/scripts/assistance-ivr/";
+  private static final String assistanceIVRGatherCallbackEndpoint = "/api/twilio/callbacks/assistance-ivr/";
 
   private TwilioConfig twilioConfig;
   private final TranslationResourceBundleService translationResourceBundleService;
@@ -36,25 +44,45 @@ public class TwilioAdapter {
     Twilio.init(twilioConfig.accountSid, twilioConfig.authToken);
   }
 
-  public void makeVolunteerCall(User volunteerToCall) {
+  public VoiceResponse generateGenericErrorResponse() {
+    VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
+    responseBuilder.pause(new Pause.Builder().length(1).build());
+    responseBuilder.say(new Say.Builder("An unexpected error has occurred in Beacon. We're very sorry for any inconvenience and will work to correct the issue.").build());
+    responseBuilder.hangup(new Hangup.Builder().build());
+    return responseBuilder.build();
+  }
+
+  public void makeVolunteerCall(UserAssistanceRequest userAssistanceRequest, User volunteerToCall) {
     PhoneNumber toNumber = convertUserPhoneToTwilioPhone(volunteerToCall.phoneNumber);
 
     try {
-      URI callbackURI = new URI(twilioConfig.host + assistanceRequestScriptEndpoint);
+      URI callbackURI = new URI(twilioConfig.host + assistanceRequestScriptEndpoint + userAssistanceRequest.id + "/" + encodeValue(volunteerToCall.id));
       makeOutgoingCall(toNumber, callbackURI);
     } catch (URISyntaxException ex) {
       System.out.println(ex.toString());
     }
   }
 
-  public VoiceResponse getAssistPromptVoiceScript() {
+  public VoiceResponse getAssistPromptVoiceScript(UserAssistanceRequest userAssistanceRequest, User volunteer) {
+
+    Say.Language language = this.convertUserPreferredLanguageToTwilioLanguage(volunteer);
+    String contentKey = "twilio.assist-prompt";
+    switch (userAssistanceRequest.requestedCapability) {
+      case LAW_ENFORCEMENT_TRANSLATION:
+        contentKey += ".law-enforcement";
+        break;
+      case MEDICAL_TRANSLATION:
+        contentKey += ".medical";
+        break;
+    }
+    String content = this.translate(contentKey, volunteer.preferredLanguage);
+
     VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
     responseBuilder.pause(new Pause.Builder().length(1).build());
 
     try {
-      Say prompt = new Say.Builder("This is Beacon, Press one if you are available to assist")
-          .voice(Say.Voice.ALICE)
-          .language(Say.Language.EN_US)
+      Say prompt = new Say.Builder(content)
+          .language(language)
           .build();
 
       Gather gather = new Gather.Builder()
@@ -91,12 +119,11 @@ public class TwilioAdapter {
     return responseBuilder.build();
   }
 
-  public void makePhoneHelpCall() {
-    String to = "+16365786943";
-    PhoneNumber toNumber = new PhoneNumber(to);
+  public void makePhoneHelpCall(User user) {
+    PhoneNumber toNumber = this.convertUserPhoneToTwilioPhone(user.phoneNumber);
 
     try {
-      URI callbackURI = new URI(twilioConfig.host + assistanceIVRScriptEndpoint);
+      URI callbackURI = new URI(twilioConfig.host + assistanceIVRScriptEndpoint + encodeValue(user.id));
       makeOutgoingCall(toNumber, callbackURI);
     } catch (URISyntaxException ex) {
       System.out.println(ex.toString());
@@ -173,6 +200,30 @@ public class TwilioAdapter {
     String exchange = userPhone.exchange;
     String lineCode = userPhone.lineNumber;
     return new PhoneNumber("+" + countryCode + areaCode + exchange + lineCode);
+  }
+
+  private Say.Language convertUserPreferredLanguageToTwilioLanguage(User user) {
+
+    String localeId = MessageFormat.format("{0}-{1}",
+        user.preferredLanguage.getLanguage(),
+        user.preferredLanguage.getCountry());
+
+    switch (localeId) {
+      case "ES-ES":
+        return Say.Language.ES_ES;
+      default:
+        return Say.Language.EN_US;
+    }
+  }
+
+  private String encodeValue(String value) {
+    try {
+      return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+    }
+    catch (UnsupportedEncodingException ex) {
+      System.out.print("Unsupported Encoding Exception Thrown...");
+      return value;
+    }
   }
 
   @Cacheable("translation")
