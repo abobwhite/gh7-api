@@ -1,10 +1,8 @@
 package com.gh7.api.services;
 
 import com.gh7.api.config.TwilioConfig;
-import com.gh7.api.models.ASSISTANCE_CAPABILITY;
 import com.gh7.api.models.User;
 import com.gh7.api.models.UserAssistanceRequest;
-import com.gh7.api.models.UserPhoneHelpRequest;
 import com.twilio.Twilio;
 import com.twilio.http.HttpMethod;
 import com.twilio.rest.api.v2010.account.Call;
@@ -16,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import javax.websocket.EncodeException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -86,7 +83,10 @@ public class TwilioAdapter {
           .build();
 
       Gather gather = new Gather.Builder()
-          .action(new URI(twilioConfig.host + assistanceRequestGatherCallbackEndpoint))
+          .action(new URI(twilioConfig.host +
+              assistanceRequestGatherCallbackEndpoint +
+              userAssistanceRequest.id + "/" +
+              encodeValue(volunteer.id)))
           .input(Gather.Input.DTMF_SPEECH)
           .timeout(10)
           .numDigits(1)
@@ -101,21 +101,32 @@ public class TwilioAdapter {
     return responseBuilder.build();
   }
 
-  public VoiceResponse handleAssistanceRequestGatherResponse(String digits) {
+  public VoiceResponse respondToApprovedAssistanceRequest(User requestingUser, User volunteer) {
     VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
-    switch (digits) {
-      case "1":
-        responseBuilder.say(new Say.Builder("Please stay on the line. We will connect you.").build());
-        responseBuilder.pause(new Pause.Builder().length(1).build());
-        Number outgoingNumber = new Number.Builder("+13149108606").build();
-        responseBuilder.dial(new Dial.Builder().number(outgoingNumber).build());
-        break;
-      default:
-        responseBuilder.say(new Say.Builder("We will find someone else. Thanks for your time.").build());
-        responseBuilder.hangup(new Hangup.Builder().build());
-        break;
-    }
 
+    String content = translate("twilio.assist-confirmed", volunteer.preferredLanguage);
+    Say say = new Say.Builder(content)
+                     .language(convertUserPreferredLanguageToTwilioLanguage(volunteer))
+                     .build();
+
+    responseBuilder.say(say);
+    responseBuilder.pause(new Pause.Builder().length(1).build());
+    PhoneNumber phoneNumber = convertUserPhoneToTwilioPhone(requestingUser.phoneNumber);
+    Number outgoingNumber = new Number.Builder(phoneNumber).build();
+    responseBuilder.dial(new Dial.Builder().number(outgoingNumber).build());
+    return responseBuilder.build();
+  }
+
+  public VoiceResponse respondToDeclinedAssistanceRequest(User requestingUser) {
+    VoiceResponse.Builder responseBuilder = new VoiceResponse.Builder();
+
+    String content = translate("twilio.assist-denied", requestingUser.preferredLanguage);
+    Say say = new Say.Builder(content)
+        .language(convertUserPreferredLanguageToTwilioLanguage(requestingUser))
+        .build();
+
+    responseBuilder.say(say);
+    responseBuilder.hangup(new Hangup.Builder().build());
     return responseBuilder.build();
   }
 

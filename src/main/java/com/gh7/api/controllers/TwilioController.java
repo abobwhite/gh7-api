@@ -4,8 +4,10 @@ import com.gh7.api.exceptions.UserNotFoundException;
 import com.gh7.api.models.User;
 import com.gh7.api.models.UserAssistanceRequest;
 import com.gh7.api.repositories.UserAssistanceRequestRepository;
+import com.gh7.api.services.AssistanceService;
 import com.gh7.api.services.TwilioAdapter;
 import com.gh7.api.services.UserService;
+import com.twilio.twiml.VoiceResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,14 +20,17 @@ public class TwilioController {
   private TwilioAdapter twilioAdapter;
   private UserService userService;
   private UserAssistanceRequestRepository userAssistanceRequestRepository;
+  private AssistanceService assistanceService;
 
   @Autowired
   public TwilioController(TwilioAdapter twilioAdapter,
                           UserService userService,
-                          UserAssistanceRequestRepository userAssistanceRequestRepository) {
+                          UserAssistanceRequestRepository userAssistanceRequestRepository,
+                          AssistanceService assistanceService) {
     this.twilioAdapter = twilioAdapter;
     this.userService = userService;
     this.userAssistanceRequestRepository = userAssistanceRequestRepository;
+    this.assistanceService = assistanceService;
   }
 
   @PostMapping(value = "/scripts/assistance-request/{userAssistanceRequestId}/{volunteerId}",
@@ -53,10 +58,46 @@ public class TwilioController {
     return response;
   }
 
-  @PostMapping(value = "/callbacks/assistance-request", produces = "application/xml; charset=utf-8")
-  public String handleAssistanceRequestGatherResponse(@RequestParam(value = "Digits") String digits) {
+  @PostMapping(value = "/callbacks/assistance-request/{userAssistanceRequestId}/{volunteerId}",
+               produces = "application/xml; charset=utf-8")
+  public String handleAssistanceRequestGatherResponse(@PathVariable() String userAssistanceRequestId,
+                                                      @PathVariable() String volunteerId,
+                                                      @RequestParam(value = "Digits") String digits) {
+    UserAssistanceRequest request = null;
+    User volunteer = null;
+    User requestor = null;
+    try {
+      Optional<UserAssistanceRequest> optionalRequest = this.userAssistanceRequestRepository.findById(userAssistanceRequestId);
+      if (optionalRequest.isPresent()) {
+        request = optionalRequest.get();
+        volunteer = this.userService.getUserById(volunteerId);
+        requestor = this.userService.getUserById(request.requestingUserId);
+      }
+    }
+    catch (UserNotFoundException ex) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+    }
 
-    String response = this.twilioAdapter.handleAssistanceRequestGatherResponse(digits).toXml();
+    if (request == null || volunteer == null || requestor == null) {
+      System.out.print("Failed to retrieve the related objects for a Twilio Callback");
+      return this.twilioAdapter.generateGenericErrorResponse().toXml();
+    }
+
+    VoiceResponse voiceResponse;
+    switch (digits) {
+      case "1":
+        voiceResponse = this.twilioAdapter.respondToApprovedAssistanceRequest(requestor, volunteer);
+        break;
+
+      default:
+        voiceResponse = this.twilioAdapter.respondToDeclinedAssistanceRequest(volunteer);
+        request.rejectedVolunteerIds.add(volunteerId);
+        this.userAssistanceRequestRepository.save(request);
+        this.assistanceService.locateVolunteerForRequest(request);
+        break;
+    }
+
+    String response = voiceResponse.toXml();
     System.out.println(response);
     return response;
   }

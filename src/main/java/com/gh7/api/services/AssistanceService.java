@@ -39,7 +39,7 @@ public class AssistanceService {
   }
 
   public void handleNewAssistancePhoneHelpRequest(UserPhoneHelpRequest userPhoneHelpRequest) {
-    UserPhoneHelpRequest savedRequest = this.userPhoneHelpRequestRepository.save(userPhoneHelpRequest);
+    this.userPhoneHelpRequestRepository.save(userPhoneHelpRequest);
     try {
       User user = this.userService.getUserById(userPhoneHelpRequest.requestingUserId);
       twilioAdapter.makePhoneHelpCall(user);
@@ -52,7 +52,7 @@ public class AssistanceService {
   @Async
   public void locateVolunteerForRequest(UserAssistanceRequest userAssistanceRequest) {
 
-    // TODO: Rework all of this...
+    // TODO: Rework all of this to remove already rejected users...
     List<User> availableVolunteers = userService.findOnCallUsersWithCapability(userAssistanceRequest.requestedCapability);
     if (availableVolunteers.size() == 0) {
       System.out.print("NO MATCHING VOLUNTEERS FOUND FOR REQUEST!!");
