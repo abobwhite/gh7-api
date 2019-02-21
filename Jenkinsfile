@@ -49,7 +49,7 @@ pipeline {
     }
   }
   environment {
-    DOCKER_IMAGE = "abobwhite/gh7-api"
+    DOCKER_IMAGE = "abobwhite/beacon-api"
     COMPOSE_LOCATION = "/tmp/docker-compose.yml"
   }
 }
