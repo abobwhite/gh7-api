@@ -5,6 +5,7 @@ pipeline {
     stage("Build") {
       steps {
         echo "Building app image"
+        sh 'docker system prune -af'
         sh "docker build -t $DOCKER_IMAGE:latest ."
       }
     }
@@ -34,18 +35,6 @@ pipeline {
           }
         }
       }
-    }
-  }
-  post {
-    failure {
-      script {
-        message = "ಠ_ಠ ${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - ${currentBuild.currentResult}: \n Check console output at ${env.BUILD_URL} to view the results. @here"
-      }
-      slackSend color: "danger", message: message
-    }
-
-    success {
-      slackSend color: "good", message: "ʘ‿ʘ ${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - ${currentBuild.currentResult}: \n Check console output at ${env.BUILD_URL} to view the results."
     }
   }
   environment {
