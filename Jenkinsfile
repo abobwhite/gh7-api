@@ -25,12 +25,18 @@ pipeline {
       steps {
         echo "Deploying the latest code..."
         script {
-          configFileProvider([configFile(fileId: "compose-file", variable: "TEMP_COMPOSE_LOCATION")]) {
-            sh "mv $TEMP_COMPOSE_LOCATION $COMPOSE_LOCATION"
-            docker.withRegistry("", "dockerhub-credentials") {
-              sh "docker-compose -f $COMPOSE_LOCATION down"
-              sh "docker-compose -f $COMPOSE_LOCATION pull"
-              sh "docker-compose -f $COMPOSE_LOCATION up -d"
+          configFileProvider([configFile(fileId: "compose-file", variable: "COMPOSE_FILE")]) {
+            sh "mv $COMPOSE_FILE $COMPOSE_LOCATION/docker-compose.yml"
+
+            configFileProvider([configFile(fileId: 'compose-env', variable: 'ENV_FILE')]) {
+              sh "mv $ENV_FILE $COMPOSE_LOCATION/.env"
+
+              sh "cd $COMPOSE_LOCATION"
+              docker.withRegistry("", "dockerhub-credentials") {
+                sh "docker-compose down"
+                sh "docker-compose pull"
+                sh "docker-compose up -d"
+              }
             }
           }
         }
@@ -39,6 +45,6 @@ pipeline {
   }
   environment {
     DOCKER_IMAGE = "abobwhite/beacon-api"
-    COMPOSE_LOCATION = "/tmp/docker-compose.yml"
+    COMPOSE_LOCATION = "/opt/beacon"
   }
 }

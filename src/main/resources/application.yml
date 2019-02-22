@@ -12,9 +12,9 @@ auth0:
   issuer: https://gh7-beacon.auth0.com/
   apiAudience: gh7-beacon-api
 twilio:
-  host: http://68.183.122.97
+  host: ${TWILIO_HOST}
   account:
-    sid: AC5b4e5a52259290419a8761256f205e08
-  auth_token: 0dda1387ab171c573b976abaf4ae4d5c
+    sid: ${TWILIO_SID}
+  auth_token: ${TWILIO_AUTH_TOKEN}
   numbers:
-    outbound: +13145829012
+    outbound: ${TWILIO_PHONE_NUMBER}
