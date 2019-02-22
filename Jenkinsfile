@@ -26,12 +26,9 @@ pipeline {
                 script {
                     configFileProvider([configFile(fileId: "compose-file", variable: "COMPOSE_FILE")]) {
                         sh "mv $COMPOSE_FILE $COMPOSE_LOCATION/docker-compose.yml"
-                        sh "cd $COMPOSE_LOCATION"
-                        docker.withRegistry("", "dockerhub-credentials") {
-                            sh "docker-compose down"
-                            sh "docker-compose pull"
-                            sh "docker-compose up -d"
-                        }
+                        sh "docker-compose -f $COMPOSE_LOCATION/docker-compose.yml down"
+                        sh "docker-compose -f $COMPOSE_LOCATION/docker-compose.yml pull"
+                        sh "docker-compose -f $COMPOSE_LOCATION/docker-compose.yml up -d"
                     }
                 }
             }
