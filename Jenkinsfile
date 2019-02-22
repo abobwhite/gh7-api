@@ -33,8 +33,8 @@ pipeline {
             configFileProvider([configFile(fileId: 'compose-env', variable: 'ENV_FILE')]) {
               sh "mv $ENV_FILE $COMPOSE_LOCATION/.env"
 
-              sh "cd $COMPOSE_LOCATION"
               docker.withRegistry("", "dockerhub-credentials") {
+                sh "cd $COMPOSE_LOCATION && ls -la"
                 sh "docker-compose down"
                 sh "docker-compose pull"
                 sh "docker-compose up -d"
