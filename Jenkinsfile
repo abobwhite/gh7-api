@@ -25,6 +25,8 @@ pipeline {
       steps {
         echo "Deploying the latest code..."
         script {
+          sh "mkdir -p $COMPOSE_LOCATION"
+
           configFileProvider([configFile(fileId: "compose-file", variable: "COMPOSE_FILE")]) {
             sh "mv $COMPOSE_FILE $COMPOSE_LOCATION/docker-compose.yml"
 
